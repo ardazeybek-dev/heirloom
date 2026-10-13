@@ -96,7 +96,11 @@ pub fn from_bytes(data: List(Int)) -> Result(Share, ParseError) {
   }
 }
 
-fn guard(condition: Bool, error: e, next: fn() -> Result(a, e)) -> Result(a, e) {
+fn guard(
+  condition: Bool,
+  error: e,
+  next: fn() -> Result(a, e),
+) -> Result(a, e) {
   case condition {
     True -> Error(error)
     False -> next()

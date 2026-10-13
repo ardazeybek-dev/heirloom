@@ -24,7 +24,7 @@ pub type DecodeError {
 }
 
 /// Largest secret accepted, in bytes. The resulting share still fits a
-/// version-23 QR symbol at error-correction level M.
+/// version-19 QR symbol at error-correction level M.
 pub const max_length = 512
 
 /// Default padding block: secrets of 1..13 bytes all produce equally long

@@ -10,7 +10,11 @@ import heirloom/qr/segment
 import heirloom/qr/tables.{type Ecl}
 
 pub type Grid {
-  Grid(size: Int, modules: Dict(#(Int, Int), Bool), function: Dict(#(Int, Int), Bool))
+  Grid(
+    size: Int,
+    modules: Dict(#(Int, Int), Bool),
+    function: Dict(#(Int, Int), Bool),
+  )
 }
 
 fn set_function(grid: Grid, x: Int, y: Int, dark: Bool) -> Grid {
@@ -73,7 +77,9 @@ pub fn function_patterns(version: Int) -> Grid {
     list.index_fold(positions, grid, fn(g, cx, i) {
       list.index_fold(positions, g, fn(g, cy, j) {
         let corner =
-          { i == 0 && j == 0 } || { i == 0 && j == last } || { i == last && j == 0 }
+          { i == 0 && j == 0 }
+          || { i == 0 && j == last }
+          || { i == last && j == 0 }
         case corner {
           True -> g
           False ->
@@ -96,7 +102,8 @@ fn bit(value: Int, i: Int) -> Bool {
 /// 15-bit format word: 2 ECL bits, 3 mask bits, a BCH(15,5) remainder and the
 /// fixed XOR mask 0x5412.
 pub fn format_word(ecl: Ecl, mask: Int) -> Int {
-  let data = int.bitwise_or(int.bitwise_shift_left(tables.format_bits(ecl), 3), mask)
+  let data =
+    int.bitwise_or(int.bitwise_shift_left(tables.format_bits(ecl), 3), mask)
   let remainder =
     int.range(from: 0, to: 10, with: data, run: fn(r, _) {
       int.bitwise_exclusive_or(
@@ -105,7 +112,10 @@ pub fn format_word(ecl: Ecl, mask: Int) -> Int {
       )
     })
   int.bitwise_exclusive_or(
-    int.bitwise_or(int.bitwise_shift_left(data, 10), int.bitwise_and(remainder, 0x3FF)),
+    int.bitwise_or(
+      int.bitwise_shift_left(data, 10),
+      int.bitwise_and(remainder, 0x3FF),
+    ),
     0x5412,
   )
 }
@@ -148,7 +158,10 @@ pub fn version_word(version: Int) -> Int {
         int.bitwise_shift_right(r, 11) * 0x1F25,
       )
     })
-  int.bitwise_or(int.bitwise_shift_left(version, 12), int.bitwise_and(remainder, 0xFFF))
+  int.bitwise_or(
+    int.bitwise_shift_left(version, 12),
+    int.bitwise_and(remainder, 0xFFF),
+  )
 }
 
 fn draw_version(grid: Grid, version: Int) -> Grid {
@@ -203,8 +216,7 @@ fn column_pairs(right: Int, acc: List(Int)) -> List(Int) {
 /// Places the codeword bits; leftover remainder modules stay light.
 pub fn place(grid: Grid, codewords: List(Int)) -> Grid {
   let bits = list.flat_map(codewords, segment.int_bits(_, 8))
-  let modules =
-    place_loop(data_path(grid), bits, grid.modules)
+  let modules = place_loop(data_path(grid), bits, grid.modules)
   Grid(..grid, modules: modules)
 }
 
@@ -216,7 +228,8 @@ fn place_loop(
   case path, bits {
     [], _ -> modules
     [p, ..rest], [] -> place_loop(rest, [], dict.insert(modules, p, False))
-    [p, ..rest], [b, ..more] -> place_loop(rest, more, dict.insert(modules, p, b))
+    [p, ..rest], [b, ..more] ->
+      place_loop(rest, more, dict.insert(modules, p, b))
   }
 }
 
@@ -289,11 +302,31 @@ fn block_penalty(rows: List(List(Bool))) -> Int {
 }
 
 const finder_like_a = [
-  True, False, True, True, True, False, True, False, False, False, False,
+  True,
+  False,
+  True,
+  True,
+  True,
+  False,
+  True,
+  False,
+  False,
+  False,
+  False,
 ]
 
 const finder_like_b = [
-  False, False, False, False, True, False, True, True, True, False, True,
+  False,
+  False,
+  False,
+  False,
+  True,
+  False,
+  True,
+  True,
+  True,
+  False,
+  True,
 ]
 
 /// Rule 3: a 1:1:3:1:1 finder look-alike with four light modules on one side

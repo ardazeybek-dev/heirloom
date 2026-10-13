@@ -47,10 +47,21 @@ pub fn to_svg(code: QrCode, style: Style, pixels: Int) -> String {
   let px = int.to_string(pixels)
   string.concat([
     "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ",
-    span, " ", span, "\" width=\"", px, "\" height=\"", px,
+    span,
+    " ",
+    span,
+    "\" width=\"",
+    px,
+    "\" height=\"",
+    px,
     "\" shape-rendering=\"crispEdges\">",
-    "<rect width=\"100%\" height=\"100%\" fill=\"", style.background, "\"/>",
-    "<path fill=\"", style.foreground, "\" d=\"",
-    path_data(code, style.quiet_zone), "\"/></svg>",
+    "<rect width=\"100%\" height=\"100%\" fill=\"",
+    style.background,
+    "\"/>",
+    "<path fill=\"",
+    style.foreground,
+    "\" d=\"",
+    path_data(code, style.quiet_zone),
+    "\"/></svg>",
   ])
 }

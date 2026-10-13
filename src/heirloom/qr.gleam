@@ -122,8 +122,7 @@ pub fn add_ecc_and_interleave(
       #([list.take(rest, length), ..done], list.drop(rest, length))
     })
   let data_blocks = list.reverse(data_blocks)
-  let ecc_blocks =
-    list.map(data_blocks, reed_solomon.remainder(_, ecc_length))
+  let ecc_blocks = list.map(data_blocks, reed_solomon.remainder(_, ecc_length))
   list.append(interleave(data_blocks), interleave(ecc_blocks))
 }
 

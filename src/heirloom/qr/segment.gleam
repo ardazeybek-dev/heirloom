@@ -106,7 +106,11 @@ pub fn bit_length(segment: Segment, version: Int) -> Result(Int, Nil) {
 
 /// Header, payload, terminator, byte alignment and 0xEC/0x11 padding, as
 /// exactly `capacity` data codewords.
-pub fn to_codewords(segment: Segment, version: Int, capacity: Int) -> List(Int) {
+pub fn to_codewords(
+  segment: Segment,
+  version: Int,
+  capacity: Int,
+) -> List(Int) {
   let header =
     list.append(
       int_bits(mode_indicator(segment.mode), 4),
@@ -123,7 +127,8 @@ pub fn to_codewords(segment: Segment, version: Int, capacity: Int) -> List(Int) 
     |> list.sized_chunk(8)
     |> list.map(fn(octet) {
       list.fold(octet, 0, fn(acc, bit) {
-        acc * 2
+        acc
+        * 2
         + case bit {
           True -> 1
           False -> 0

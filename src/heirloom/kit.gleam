@@ -134,7 +134,11 @@ fn dedupe(cards: List(Share)) -> Result(List(Share), RecoverError) {
   |> result.map(list.reverse)
 }
 
-fn bool_guard(condition: Bool, error: e, next: fn() -> Result(a, e)) -> Result(a, e) {
+fn bool_guard(
+  condition: Bool,
+  error: e,
+  next: fn() -> Result(a, e),
+) -> Result(a, e) {
   case condition {
     True -> Error(error)
     False -> next()
@@ -167,15 +171,11 @@ pub fn describe_recover_error(error: RecoverError) -> String {
     NoCards -> "no cards were given"
     Unreadable(position, e) ->
       "card " <> int.to_string(position + 1) <> ": " <> share.describe_error(e)
-    MixedSets(fps) ->
-      "these cards come from different splits: " <> join(fps)
+    MixedSets(fps) -> "these cards come from different splits: " <> join(fps)
     ConflictingDuplicate(index) ->
       "two different cards both claim to be card #" <> int.to_string(index)
     NotEnough(have, need) ->
-      "need "
-      <> int.to_string(need)
-      <> " cards, got "
-      <> int.to_string(have)
+      "need " <> int.to_string(need) <> " cards, got " <> int.to_string(have)
     Inconsistent([]) ->
       "the cards do not combine into a valid secret — at least one is wrong, and there are not enough extra cards to tell which"
     Inconsistent(suspicious) ->
@@ -204,7 +204,10 @@ pub fn split_card_text(text: String) -> List(String) {
   |> string.split("\n\n")
   |> list.flat_map(fn(block) {
     let lines = block |> string.split("\n") |> list.map(string.trim)
-    let compact = list.filter(lines, fn(l) { string.contains(string.uppercase(l), share.prefix) })
+    let compact =
+      list.filter(lines, fn(l) {
+        string.contains(string.uppercase(l), share.prefix)
+      })
     case compact {
       [] -> [string.join(list.filter(lines, is_card_line), "\n")]
       _ -> compact

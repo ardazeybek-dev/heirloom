@@ -101,7 +101,8 @@ fn fail(message: String) -> Nil {
   exit(1)
 }
 
-const help = "heirloom — split a secret into printable cards; any K of N bring it back.
+const help =
+  "heirloom — split a secret into printable cards; any K of N bring it back.
 
 USAGE
   heirloom split   [options] [< secret.txt]   make cards from a secret
@@ -142,20 +143,33 @@ pub fn run(arguments: List(String)) -> Nil {
     ["qr", ..rest] -> draw_qr(rest)
     ["--version"] | ["-V"] | ["version"] -> io.println("heirloom " <> version)
     [] | ["help"] | ["--help"] | ["-h"] -> io.print(help)
-    [other, ..] -> fail("unknown command '" <> other <> "' — try heirloom --help")
+    [other, ..] ->
+      fail("unknown command '" <> other <> "' — try heirloom --help")
   }
 }
 
-fn int_setting(parsed: args.Parsed, name: String, env: String, default: Int) -> Result(Int, String) {
+fn int_setting(
+  parsed: args.Parsed,
+  name: String,
+  env: String,
+  default: Int,
+) -> Result(Int, String) {
   case args.get(parsed, name), get_env(env) {
     Ok(text), _ | Error(Nil), Ok(text) ->
       int.parse(string.trim(text))
-      |> result.replace_error("--" <> name <> " expects a whole number, got '" <> text <> "'")
+      |> result.replace_error(
+        "--" <> name <> " expects a whole number, got '" <> text <> "'",
+      )
     Error(Nil), Error(Nil) -> Ok(default)
   }
 }
 
-fn text_setting(parsed: args.Parsed, name: String, env: String, default: String) -> String {
+fn text_setting(
+  parsed: args.Parsed,
+  name: String,
+  env: String,
+  default: String,
+) -> String {
   case args.get(parsed, name), get_env(env) {
     Ok(text), _ | Error(Nil), Ok(text) -> text
     Error(Nil), Error(Nil) -> default
@@ -166,14 +180,28 @@ fn text_setting(parsed: args.Parsed, name: String, env: String, default: String)
 
 fn split(arguments: List(String)) -> Nil {
   let specs = [
-    Valued("threshold", "k"), Valued("shares", "n"), Valued("label", "l"),
-    Valued("holders", ""), Valued("secret-file", ""), Switch("hex", ""),
-    Switch("no-pad", ""), Valued("ecl", ""), Valued("paper", ""),
-    Valued("out", "o"), Switch("text", ""),
+    Valued("threshold", "k"),
+    Valued("shares", "n"),
+    Valued("label", "l"),
+    Valued("holders", ""),
+    Valued("secret-file", ""),
+    Switch("hex", ""),
+    Switch("no-pad", ""),
+    Valued("ecl", ""),
+    Valued("paper", ""),
+    Valued("out", "o"),
+    Switch("text", ""),
   ]
   let outcome = {
-    use parsed <- result.try(args.parse(arguments, specs) |> result.map_error(args.describe))
-    use k <- result.try(int_setting(parsed, "threshold", "HEIRLOOM_THRESHOLD", 3))
+    use parsed <- result.try(
+      args.parse(arguments, specs) |> result.map_error(args.describe),
+    )
+    use k <- result.try(int_setting(
+      parsed,
+      "threshold",
+      "HEIRLOOM_THRESHOLD",
+      3,
+    ))
     use n <- result.try(int_setting(parsed, "shares", "HEIRLOOM_SHARES", 5))
     use ecl <- result.try(
       text_setting(parsed, "ecl", "HEIRLOOM_QR_LEVEL", "M")
@@ -190,7 +218,9 @@ fn split(arguments: List(String)) -> Nil {
       True ->
         bytes.from_hex(raw)
         |> result.map(secret.Binary)
-        |> result.replace_error("--hex was given but the secret is not valid hex")
+        |> result.replace_error(
+          "--hex was given but the secret is not valid hex",
+        )
       False -> Ok(secret.Text(strip_final_newline(raw)))
     })
     let block = case args.has(parsed, "no-pad") {
@@ -199,7 +229,11 @@ fn split(arguments: List(String)) -> Nil {
     }
     let options = kit.SplitOptions(threshold: k, shares: n, block: block)
     use cards <- result.try(
-      kit.split(value, options, random_bytes(kit.randomness_needed(value, options)))
+      kit.split(
+        value,
+        options,
+        random_bytes(kit.randomness_needed(value, options)),
+      )
       |> result.map_error(kit.describe_split_error),
     )
     use _ <- result.try(self_test(cards, value))
@@ -212,7 +246,12 @@ fn split(arguments: List(String)) -> Nil {
         label: result.unwrap(args.get(parsed, "label"), ""),
         holders: holders,
         created: today(),
-        recovery_url: text_setting(parsed, "recovery-url", "HEIRLOOM_RECOVERY_URL", default_recovery_url),
+        recovery_url: text_setting(
+          parsed,
+          "recovery-url",
+          "HEIRLOOM_RECOVERY_URL",
+          default_recovery_url,
+        ),
         paper: paper,
         ecl: ecl,
       )
@@ -227,7 +266,10 @@ fn split(arguments: List(String)) -> Nil {
         let assert [first, ..] = cards
         let qr_info = case qr.encode(share.to_compact(first), ecl) {
           Ok(code) ->
-            "QR version " <> int.to_string(code.version) <> "-" <> tables.ecl_name(code.ecl)
+            "QR version "
+            <> int.to_string(code.version)
+            <> "-"
+            <> tables.ecl_name(code.ecl)
           Error(_) -> "no QR (too long)"
         }
         note(
@@ -235,10 +277,19 @@ fn split(arguments: List(String)) -> Nil {
           <> bold(int.to_string(n) <> " cards")
           <> " written to "
           <> bold(out)
-          <> dim(" · any " <> int.to_string(k) <> " recover · set " <> share.fingerprint(first) <> " · " <> qr_info),
+          <> dim(
+            " · any "
+            <> int.to_string(k)
+            <> " recover · set "
+            <> share.fingerprint(first)
+            <> " · "
+            <> qr_info,
+          ),
         )
         note(dim("  self-test passed: the cards recombine to your secret."))
-        note(yellow("  Print it, then delete " <> out <> " — it holds every share."))
+        note(yellow(
+          "  Print it, then delete " <> out <> " — it holds every share.",
+        ))
         Ok(Nil)
       }
     }
@@ -276,7 +327,10 @@ fn strip_final_newline(text: String) -> String {
 }
 
 /// Recombines the first and the last k cards before anything is written.
-fn self_test(cards: List(share.Share), value: secret.Secret) -> Result(Nil, String) {
+fn self_test(
+  cards: List(share.Share),
+  value: secret.Secret,
+) -> Result(Nil, String) {
   let assert [first, ..] = cards
   let k = first.threshold
   let subsets = [list.take(cards, k), list.drop(cards, list.length(cards) - k)]
@@ -289,7 +343,10 @@ fn self_test(cards: List(share.Share), value: secret.Secret) -> Result(Nil, Stri
     })
   {
     True -> Ok(Nil)
-    False -> Error("internal self-test failed: cards did not recombine; nothing was written")
+    False ->
+      Error(
+        "internal self-test failed: cards did not recombine; nothing was written",
+      )
   }
 }
 
@@ -300,8 +357,16 @@ fn print_text_cards(cards: List(share.Share), sheet: card.Sheet) -> Nil {
       [] -> ""
     }
     io.println(
-      bold("Card " <> int.to_string(c.index) <> " of " <> int.to_string(c.total))
-      <> dim(" · any " <> int.to_string(c.threshold) <> " recover · set " <> share.fingerprint(c) <> holder),
+      bold(
+        "Card " <> int.to_string(c.index) <> " of " <> int.to_string(c.total),
+      )
+      <> dim(
+        " · any "
+        <> int.to_string(c.threshold)
+        <> " recover · set "
+        <> share.fingerprint(c)
+        <> holder,
+      ),
     )
     io.println(share.to_compact(c))
     list.each(share.to_rows(c), fn(row) { io.println("  " <> row) })
@@ -331,15 +396,23 @@ fn read_cards(paths: List(String)) -> Result(List(String), String) {
 
 fn combine(arguments: List(String)) -> Nil {
   let outcome = {
-    use parsed <- result.try(args.parse(arguments, [Switch("hex", "")]) |> result.map_error(args.describe))
+    use parsed <- result.try(
+      args.parse(arguments, [Switch("hex", "")])
+      |> result.map_error(args.describe),
+    )
     use texts <- result.try(read_cards(parsed.positional))
-    use recovery <- result.try(kit.recover(texts) |> result.map_error(kit.describe_recover_error))
+    use recovery <- result.try(
+      kit.recover(texts) |> result.map_error(kit.describe_recover_error),
+    )
     let output = case recovery.secret, args.has(parsed, "hex") {
       secret.Text(text), False -> text
       value, _ -> bytes.to_hex(secret.to_bytes(value))
     }
     io.println(output)
-    let used = recovery.used |> list.map(fn(x) { "#" <> int.to_string(x) }) |> string.join(" ")
+    let used =
+      recovery.used
+      |> list.map(fn(x) { "#" <> int.to_string(x) })
+      |> string.join(" ")
     note(
       green("✓ recovered")
       <> dim(" · set " <> recovery.fingerprint <> " · cards " <> used),
@@ -363,7 +436,9 @@ fn combine(arguments: List(String)) -> Nil {
 
 fn verify(arguments: List(String)) -> Nil {
   let outcome = {
-    use parsed <- result.try(args.parse(arguments, []) |> result.map_error(args.describe))
+    use parsed <- result.try(
+      args.parse(arguments, []) |> result.map_error(args.describe),
+    )
     use texts <- result.try(read_cards(parsed.positional))
     let results = list.map(texts, share.parse)
     list.index_map(results, fn(r, i) {
@@ -371,9 +446,18 @@ fn verify(arguments: List(String)) -> Nil {
       case r {
         Ok(c) ->
           io.println(
-            green("✓ ") <> position <> "#" <> int.to_string(c.index) <> " of "
-            <> int.to_string(c.total) <> dim(" · set " <> share.fingerprint(c)
-            <> " · needs " <> int.to_string(c.threshold)),
+            green("✓ ")
+            <> position
+            <> "#"
+            <> int.to_string(c.index)
+            <> " of "
+            <> int.to_string(c.total)
+            <> dim(
+              " · set "
+              <> share.fingerprint(c)
+              <> " · needs "
+              <> int.to_string(c.threshold),
+            ),
           )
         Error(e) -> io.println(red("✗ ") <> position <> share.describe_error(e))
       }
@@ -385,17 +469,26 @@ fn verify(arguments: List(String)) -> Nil {
         case have >= first.threshold, kit.recover(texts) {
           True, Ok(recovery) if recovery.suspicious == [] ->
             io.println(dim(
-              "  " <> int.to_string(have) <> " cards — enough to recover, and mutually consistent.",
+              "  "
+              <> int.to_string(have)
+              <> " cards — enough to recover, and mutually consistent.",
             ))
           True, Ok(recovery) ->
             io.println(yellow(
               "  inconsistent card(s): "
-              <> string.join(list.map(recovery.suspicious, fn(x) { "#" <> int.to_string(x) }), " "),
+              <> string.join(
+                list.map(recovery.suspicious, fn(x) { "#" <> int.to_string(x) }),
+                " ",
+              ),
             ))
-          True, Error(e) -> io.println(yellow("  " <> kit.describe_recover_error(e)))
+          True, Error(e) ->
+            io.println(yellow("  " <> kit.describe_recover_error(e)))
           False, _ ->
             io.println(dim(
-              "  " <> int.to_string(have) <> " of " <> int.to_string(first.threshold)
+              "  "
+              <> int.to_string(have)
+              <> " of "
+              <> int.to_string(first.threshold)
               <> " cards needed — readable, not yet enough to recover.",
             ))
         }
@@ -415,7 +508,9 @@ fn verify(arguments: List(String)) -> Nil {
 fn draw_qr(arguments: List(String)) -> Nil {
   let specs = [Switch("svg", ""), Valued("out", "o"), Valued("ecl", "")]
   let outcome = {
-    use parsed <- result.try(args.parse(arguments, specs) |> result.map_error(args.describe))
+    use parsed <- result.try(
+      args.parse(arguments, specs) |> result.map_error(args.describe),
+    )
     use text <- result.try(case parsed.positional {
       [] -> Error("qr needs the text to encode")
       words -> Ok(string.join(words, " "))
@@ -425,7 +520,10 @@ fn draw_qr(arguments: List(String)) -> Nil {
       |> tables.ecl_from_name
       |> result.replace_error("--ecl must be one of L, M, Q, H"),
     )
-    use code <- result.try(qr.encode(text, ecl) |> result.replace_error("text too long for a QR code"))
+    use code <- result.try(
+      qr.encode(text, ecl)
+      |> result.replace_error("text too long for a QR code"),
+    )
     let document = svg.to_svg(code, svg.default_style, 320)
     case args.get(parsed, "out"), args.has(parsed, "svg") {
       Ok(path), _ -> write_file(path, document)
@@ -433,9 +531,18 @@ fn draw_qr(arguments: List(String)) -> Nil {
       Error(Nil), False -> {
         io.println(terminal(code))
         note(dim(
-          "version " <> int.to_string(code.version) <> "-" <> tables.ecl_name(code.ecl)
-          <> " · " <> int.to_string(code.size) <> "×" <> int.to_string(code.size)
-          <> " · mask " <> int.to_string(code.mask) <> " · " <> segment_name(code),
+          "version "
+          <> int.to_string(code.version)
+          <> "-"
+          <> tables.ecl_name(code.ecl)
+          <> " · "
+          <> int.to_string(code.size)
+          <> "×"
+          <> int.to_string(code.size)
+          <> " · mask "
+          <> int.to_string(code.mask)
+          <> " · "
+          <> segment_name(code),
         ))
         Ok(Nil)
       }

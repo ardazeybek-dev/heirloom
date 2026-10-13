@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: false
+          gleam-version: "1.19.2"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: gleam format --check src test
+      - run: gleam test
+      - run: npm run build
+      - name: CLI round trip
+        run: |
+          printf 'correct horse battery staple' | node dist/heirloom.mjs split -k 3 -n 5 --text > cards.txt
+          grep '^HL1:' cards.txt | sed -n '2p;4p;5p' > three.txt
+          test "$(node dist/heirloom.mjs combine three.txt)" = "correct horse battery staple"
+          grep '^HL1:' cards.txt | head -2 > two.txt
+          if node dist/heirloom.mjs combine two.txt; then echo "two cards must not recover"; exit 1; fi
+          node dist/heirloom.mjs verify three.txt
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install opencv-python-headless==4.10.0.84
+      - name: Decode generated QR codes with OpenCV
+        run: npm run verify:qr
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t heirloom .
+      - name: Round trip inside an offline container
+        run: |
+          printf 'docker secret' | docker run --rm -i --network none heirloom split -k 2 -n 2 --text > cards.txt
+          grep '^HL1:' cards.txt | docker run --rm -i --network none heirloom combine | grep -qx 'docker secret'

@@ -26,7 +26,10 @@ pub type ArgError {
   MissingValue(String)
 }
 
-pub fn parse(arguments: List(String), specs: List(Spec)) -> Result(Parsed, ArgError) {
+pub fn parse(
+  arguments: List(String),
+  specs: List(Spec),
+) -> Result(Parsed, ArgError) {
   loop(arguments, specs, Parsed(dict.new(), [], []))
   |> result.map(fn(p) { Parsed(..p, positional: list.reverse(p.positional)) })
 }
@@ -48,11 +51,20 @@ fn loop(
   case arguments {
     [] -> Ok(acc)
     ["--", ..rest] ->
-      Ok(Parsed(..acc, positional: list.append(list.reverse(rest), acc.positional)))
+      Ok(
+        Parsed(
+          ..acc,
+          positional: list.append(list.reverse(rest), acc.positional),
+        ),
+      )
     [argument, ..rest] ->
       case string.starts_with(argument, "-") && argument != "-" {
         False ->
-          loop(rest, specs, Parsed(..acc, positional: [argument, ..acc.positional]))
+          loop(
+            rest,
+            specs,
+            Parsed(..acc, positional: [argument, ..acc.positional]),
+          )
         True -> {
           let #(name, inline) = case string.split_once(argument, "=") {
             Ok(#(n, v)) -> #(n, Ok(v))
@@ -63,10 +75,19 @@ fn loop(
             Ok(Switch(long, _)), _, _ ->
               loop(rest, specs, Parsed(..acc, switches: [long, ..acc.switches]))
             Ok(Valued(long, _)), Ok(value), _ ->
-              loop(rest, specs, Parsed(..acc, options: dict.insert(acc.options, long, value)))
+              loop(
+                rest,
+                specs,
+                Parsed(..acc, options: dict.insert(acc.options, long, value)),
+              )
             Ok(Valued(long, _)), Error(Nil), [value, ..more] ->
-              loop(more, specs, Parsed(..acc, options: dict.insert(acc.options, long, value)))
-            Ok(Valued(long, _)), Error(Nil), [] -> Error(MissingValue("--" <> long))
+              loop(
+                more,
+                specs,
+                Parsed(..acc, options: dict.insert(acc.options, long, value)),
+              )
+            Ok(Valued(long, _)), Error(Nil), [] ->
+              Error(MissingValue("--" <> long))
           }
         }
       }

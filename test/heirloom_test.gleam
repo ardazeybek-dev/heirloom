@@ -70,7 +70,10 @@ pub fn base32_known_value_test() {
 pub fn base32_forgiving_input_test() {
   let encoded = base32.encode([0, 1, 2, 3, 4])
   let messy =
-    encoded |> string.lowercase |> string.replace("0", "o") |> string.replace("1", "l")
+    encoded
+    |> string.lowercase
+    |> string.replace("0", "o")
+    |> string.replace("1", "l")
   assert base32.decode("  " <> messy <> " - ") == Ok([0, 1, 2, 3, 4])
 }
 
@@ -104,7 +107,9 @@ pub fn below_threshold_does_not_recover_test() {
   let random = pseudo_random(9, shamir.randomness_needed(list.length(data), 3))
   let assert Ok(points) = shamir.split(data, threshold: 3, shares: 5, random:)
   list.combinations(points, 2)
-  |> list.each(fn(subset) { assert shamir.combine(subset) != Ok(data) })
+  |> list.each(fn(subset) {
+    assert shamir.combine(subset) != Ok(data)
+  })
 }
 
 pub fn two_shares_fit_every_secret_test() {
@@ -229,11 +234,15 @@ pub fn recover_from_any_three_cards_test() {
 }
 
 pub fn typo_is_reported_with_row_number_test() {
-  let assert [card, ..] = make_cards("a secret long enough for three rows!!", 2, 3)
+  let assert [card, ..] =
+    make_cards("a secret long enough for three rows!!", 2, 3)
   let rows = share.to_rows(card)
   let assert [r1, r2, ..rest] = rows
   // Flip one data symbol in row 2 (after the "02  " prefix).
-  let broken = string.slice(r2, 0, 5) <> flip(string.slice(r2, 5, 1)) <> string.drop_start(r2, 6)
+  let broken =
+    string.slice(r2, 0, 5)
+    <> flip(string.slice(r2, 5, 1))
+    <> string.drop_start(r2, 6)
   let text = string.join([r1, broken, ..rest], "\n")
   assert share.parse(text) == Error(share.RowTypo(2))
 }
@@ -248,7 +257,10 @@ fn flip(symbol: String) -> String {
 pub fn damaged_compact_text_fails_checksum_test() {
   let assert [card, ..] = make_cards("abc", 2, 2)
   let compact = share.to_compact(card)
-  let damaged = string.drop_end(compact, 3) <> flip(string.slice(compact, -3, 1)) <> string.slice(compact, -2, 2)
+  let damaged =
+    string.drop_end(compact, 3)
+    <> flip(string.slice(compact, -3, 1))
+    <> string.slice(compact, -2, 2)
   let assert Error(error) = share.parse(damaged)
   assert error == share.ChecksumMismatch || error == share.TooShort
 }
@@ -264,7 +276,11 @@ pub fn recover_rejects_mixed_sets_test() {
   let value = secret.Text("abc")
   let options = kit.SplitOptions(threshold: 2, shares: 3, block: 16)
   let assert Ok(b) =
-    kit.split(value, options, pseudo_random(99, kit.randomness_needed(value, options)))
+    kit.split(
+      value,
+      options,
+      pseudo_random(99, kit.randomness_needed(value, options)),
+    )
   let assert [a1, ..] = a
   let assert [_, b2, ..] = b
   let assert Error(kit.MixedSets(_)) =
@@ -286,7 +302,9 @@ pub fn forged_card_with_valid_checksum_is_outvoted_test() {
     list.map(cards, fn(card) {
       case card.index == 4 {
         True ->
-          share.to_compact(share.Share(..card, ys: list.map(card.ys, gf256.add(_, 1))))
+          share.to_compact(
+            share.Share(..card, ys: list.map(card.ys, gf256.add(_, 1))),
+          )
         False -> share.to_compact(card)
       }
     })
@@ -296,7 +314,9 @@ pub fn forged_card_with_valid_checksum_is_outvoted_test() {
 }
 
 pub fn split_cards_from_text_output_test() {
-  let text = "Card 1 of 3 · any 2\nHL1:AAAA\n  01  AAAA  B\n\nCard 2 of 3\nHL1:BBBB\n"
+  let text =
+    "Card 1 of 3 · any 2\nHL1:AAAA\n  01  AAAA  B\n\nCard 2 of 3\nHL1:BBBB\n"
   assert kit.split_card_text(text) == ["HL1:AAAA", "HL1:BBBB"]
-  assert kit.split_card_text("01  AB  C\n02  DE  F\n\n01  GH  J") == ["01  AB  C\n02  DE  F", "01  GH  J"]
+  assert kit.split_card_text("01  AB  C\n02  DE  F\n\n01  GH  J")
+    == ["01  AB  C\n02  DE  F", "01  GH  J"]
 }

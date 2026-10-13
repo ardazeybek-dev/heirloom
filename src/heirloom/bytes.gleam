@@ -62,8 +62,7 @@ pub fn to_uint(bytes: List(Int)) -> Int {
 
 pub fn from_uint(value: Int, width: Int) -> List(Int) {
   int.range(from: width - 1, to: -1, with: [], run: fn(acc, i) {
-    let byte =
-      value |> int.bitwise_shift_right(8 * i) |> int.bitwise_and(0xFF)
+    let byte = value |> int.bitwise_shift_right(8 * i) |> int.bitwise_and(0xFF)
     [byte, ..acc]
   })
   |> list.reverse

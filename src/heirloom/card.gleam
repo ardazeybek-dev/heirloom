@@ -54,8 +54,12 @@ pub fn qr_svg(card: Share, ecl: Ecl) -> String {
   case qr.encode(share.to_compact(card), ecl) {
     Ok(code) ->
       svg.to_svg(code, svg.Style("#14161c", "#ffffff", 4), 220)
-      |> string.replace("width=\"220\" height=\"220\"", "class=\"qr-svg\" role=\"img\" aria-label=\"QR code of this card\"")
-    Error(qr.DataTooLong) -> "<p class=\"qr-missing\">Secret too long for a QR code — use the rows below.</p>"
+      |> string.replace(
+        "width=\"220\" height=\"220\"",
+        "class=\"qr-svg\" role=\"img\" aria-label=\"QR code of this card\"",
+      )
+    Error(qr.DataTooLong) ->
+      "<p class=\"qr-missing\">Secret too long for a QR code — use the rows below.</p>"
   }
 }
 
@@ -77,22 +81,51 @@ pub fn card_html(card: Share, sheet: Sheet) -> String {
       let number = string.slice(row, 0, 2)
       let check = string.slice(row, string.length(row) - 1, 1)
       let body = string.slice(row, 4, string.length(row) - 7)
-      "<span class=\"n\">" <> number <> "</span>" <> body
-      <> "<span class=\"c\">" <> check <> "</span>"
+      "<span class=\"n\">"
+      <> number
+      <> "</span>"
+      <> body
+      <> "<span class=\"c\">"
+      <> check
+      <> "</span>"
     })
     |> string.join("\n")
   string.concat([
-    "<section class=\"card\" aria-label=\"Card ", i, " of ", n, "\">",
+    "<section class=\"card\" aria-label=\"Card ",
+    i,
+    " of ",
+    n,
+    "\">",
     "<header><span class=\"brand\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2 3 7v10l9 5 9-5V7z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/><path d=\"M12 7v10M7.5 9.5 12 12l4.5-2.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/></svg>heirloom</span>",
-    "<span class=\"seq\">Card <b>", i, "</b> of ", n, "</span></header>",
-    "<div class=\"body\"><div class=\"qr\">", qr_svg(card, sheet.ecl), "</div>",
-    "<div class=\"meta\"><p class=\"rule\">Any <b>", k, "</b> of the <b>", n,
+    "<span class=\"seq\">Card <b>",
+    i,
+    "</b> of ",
+    n,
+    "</span></header>",
+    "<div class=\"body\"><div class=\"qr\">",
+    qr_svg(card, sheet.ecl),
+    "</div>",
+    "<div class=\"meta\"><p class=\"rule\">Any <b>",
+    k,
+    "</b> of the <b>",
+    n,
     "</b> cards recover the secret.<br><span>This card alone reveals nothing.</span></p>",
-    "<dl>", label_row, "<dt>Kept by</dt><dd>", kept_by, "</dd>",
-    "<dt>Set</dt><dd class=\"mono\">", share.fingerprint(card), "</dd>",
-    "<dt>Created</dt><dd>", escape(sheet.created), "</dd></dl></div></div>",
-    "<pre class=\"rows\" aria-label=\"Card text\">", rows, "</pre>",
-    "<footer>Recover: scan or type this card at <b>", escape(sheet.recovery_url),
+    "<dl>",
+    label_row,
+    "<dt>Kept by</dt><dd>",
+    kept_by,
+    "</dd>",
+    "<dt>Set</dt><dd class=\"mono\">",
+    share.fingerprint(card),
+    "</dd>",
+    "<dt>Created</dt><dd>",
+    escape(sheet.created),
+    "</dd></dl></div></div>",
+    "<pre class=\"rows\" aria-label=\"Card text\">",
+    rows,
+    "</pre>",
+    "<footer>Recover: scan or type this card at <b>",
+    escape(sheet.recovery_url),
     "</b> (runs offline) or <code>heirloom combine</code>. ",
     "The last symbol of each row is a check — it pinpoints typos.</footer>",
     "</section>",
@@ -110,7 +143,10 @@ fn distribution_html(cards: List(Share), sheet: Sheet) -> String {
         "" -> "<span class=\"blank\"></span>"
         name -> escape(name)
       }
-      "<tr><td>#" <> int.to_string(card.index) <> "</td><td>" <> name
+      "<tr><td>#"
+      <> int.to_string(card.index)
+      <> "</td><td>"
+      <> name
       <> "</td><td class=\"blank-cell\"></td></tr>"
     })
     |> string.concat
@@ -120,16 +156,27 @@ fn distribution_html(cards: List(Share), sheet: Sheet) -> String {
   }
   string.concat([
     "<section class=\"cover\"><p class=\"eyebrow\">Distribution sheet · contains no secret material</p>",
-    "<h1>Set <span class=\"mono\">", share.fingerprint(first), "</span></h1>", label,
-    "<p class=\"lead\">", n, " cards were made. Any <b>", k,
-    "</b> of them recover the secret; ", int.to_string(first.threshold - 1),
+    "<h1>Set <span class=\"mono\">",
+    share.fingerprint(first),
+    "</span></h1>",
+    label,
+    "<p class=\"lead\">",
+    n,
+    " cards were made. Any <b>",
+    k,
+    "</b> of them recover the secret; ",
+    int.to_string(first.threshold - 1),
     " or fewer reveal nothing at all — not even its length.</p>",
     "<table><thead><tr><th>Card</th><th>Holder</th><th>Handed over (date · signature)</th></tr></thead><tbody>",
-    rows, "</tbody></table>",
+    rows,
+    "</tbody></table>",
     "<ol class=\"steps\"><li>Cut out each card and give it to a different person or place.</li>",
     "<li>Tell holders what the card is for and who else holds one — never put two cards in the same drawer.</li>",
     "<li>Destroy this printout's digital file (and your printer queue) once the cards are handed out.</li>",
-    "<li>To recover, collect ", k, " cards and open <b>", escape(sheet.recovery_url),
+    "<li>To recover, collect ",
+    k,
+    " cards and open <b>",
+    escape(sheet.recovery_url),
     "</b> — it works offline — or run <code>heirloom combine</code>.</li></ol>",
     "</section>",
   ])
@@ -145,15 +192,21 @@ pub fn sheet_html(cards: List(Share), sheet: Sheet) -> String {
     "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
     "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:\">",
-    "<title>heirloom cards</title><style>@page{size:", page, ";margin:12mm}", stylesheet,
+    "<title>heirloom cards</title><style>@page{size:",
+    page,
+    ";margin:12mm}",
+    stylesheet,
     "</style></head><body>",
     "<div class=\"screen-note\">Print this page (Ctrl/⌘ + P). Each card is cut along the dashed line.</div>",
-    distribution_html(cards, sheet), cards_html, "</body></html>",
+    distribution_html(cards, sheet),
+    cards_html,
+    "</body></html>",
   ])
 }
 
 /// Card styles, shared with the browser playground's preview.
-pub const stylesheet = "
+pub const stylesheet =
+  "
 :root{--ink:#14161c;--muted:#5d6472;--line:#d9d3c7;--paper:#fffdf8;--brass:#9a7b4f}
 *{box-sizing:border-box}
 body{margin:0;background:#ece8df;color:var(--ink);font:14px/1.45 'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif}

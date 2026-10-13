@@ -67,9 +67,14 @@ pub fn split(
     True -> secret.default_block
     False -> 1
   }
-  let options = kit.SplitOptions(threshold: threshold, shares: shares, block: block)
+  let options =
+    kit.SplitOptions(threshold: threshold, shares: shares, block: block)
   use cards <- result.try(
-    kit.split(value, options, random_bytes(kit.randomness_needed(value, options)))
+    kit.split(
+      value,
+      options,
+      random_bytes(kit.randomness_needed(value, options)),
+    )
     |> result.map_error(kit.describe_split_error),
   )
   let ecl = result.unwrap(tables.ecl_from_name(ecl_name), tables.Medium)
@@ -124,7 +129,14 @@ pub fn inspect(text: String) -> List(CardStatus) {
   |> list.map(fn(card_text) {
     case share.parse(card_text) {
       Ok(c) ->
-        CardStatus(True, "readable", c.index, c.total, c.threshold, share.fingerprint(c))
+        CardStatus(
+          True,
+          "readable",
+          c.index,
+          c.total,
+          c.threshold,
+          share.fingerprint(c),
+        )
       Error(e) -> CardStatus(False, share.describe_error(e), 0, 0, 0, "")
     }
   })
@@ -174,7 +186,11 @@ pub fn card_stylesheet() -> String {
 }
 
 /// Any text as an SVG QR code (used for the page's decorative demo).
-pub fn qr_svg(text: String, ecl_name: String, foreground: String) -> Result(String, String) {
+pub fn qr_svg(
+  text: String,
+  ecl_name: String,
+  foreground: String,
+) -> Result(String, String) {
   let ecl = result.unwrap(tables.ecl_from_name(ecl_name), tables.Medium)
   qr.encode(text, ecl)
   |> result.replace_error("Too long for a QR code.")

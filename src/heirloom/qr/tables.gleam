@@ -66,8 +66,8 @@ const ecc_per_block_high = [
 
 // Number of error-correction blocks, indexed by version 1..40.
 const blocks_low = [
-  1, 1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 4, 6, 6, 6, 6, 7, 8, 8, 9, 9, 10, 12, 12,
-  12, 13, 14, 15, 16, 17, 18, 19, 19, 20, 21, 22, 24, 25,
+  1, 1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 4, 6, 6, 6, 6, 7, 8, 8, 9, 9, 10, 12,
+  12, 12, 13, 14, 15, 16, 17, 18, 19, 19, 20, 21, 22, 24, 25,
 ]
 
 const blocks_medium = [
@@ -76,8 +76,8 @@ const blocks_medium = [
 ]
 
 const blocks_quartile = [
-  1, 1, 2, 2, 4, 4, 6, 6, 8, 8, 8, 10, 12, 16, 12, 17, 16, 18, 21, 20, 23, 23, 25,
-  27, 29, 34, 34, 35, 38, 40, 43, 45, 48, 51, 53, 56, 59, 62, 65, 68,
+  1, 1, 2, 2, 4, 4, 6, 6, 8, 8, 8, 10, 12, 16, 12, 17, 16, 18, 21, 20, 23, 23,
+  25, 27, 29, 34, 34, 35, 38, 40, 43, 45, 48, 51, 53, 56, 59, 62, 65, 68,
 ]
 
 const blocks_high = [
@@ -136,7 +136,8 @@ pub fn total_codewords(version: Int) -> Int {
 }
 
 pub fn data_codewords(version: Int, ecl: Ecl) -> Int {
-  total_codewords(version) - ecc_per_block(version, ecl)
+  total_codewords(version)
+  - ecc_per_block(version, ecl)
   * block_count(version, ecl)
 }
 

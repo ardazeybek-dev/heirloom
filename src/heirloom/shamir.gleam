@@ -224,14 +224,17 @@ fn search(
     [subset, ..rest] -> {
       let agreeing =
         list.filter(points, fn(p) {
-          list.contains(subset, p)
-          || interpolate_at(subset, p.x) == Ok(p.ys)
+          list.contains(subset, p) || interpolate_at(subset, p.x) == Ok(p.ys)
         })
       let count = list.length(agreeing)
       let #(best_points, best_count, tie) = best
       let next = case count > best_count, count == best_count {
         True, _ -> #(agreeing, count, False)
-        _, True -> #(best_points, best_count, tie || !same_xs(agreeing, best_points))
+        _, True -> #(
+          best_points,
+          best_count,
+          tie || !same_xs(agreeing, best_points),
+        )
         _, _ -> best
       }
       case count == m {

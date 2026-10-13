@@ -1,0 +1,7 @@
+build
+node_modules
+dist
+web/heirloom.js
+.git
+.env
+cards*.html
