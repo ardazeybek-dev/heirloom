@@ -49,6 +49,7 @@
         <ul class="trust">
           <li><span class="dot"></span>Runs entirely in your browser</li>
           <li><span class="dot"></span>Loads nothing from the network</li>
+          <li><span class="dot"></span><a href="heirloom-offline.html" download>Works offline — one file</a></li>
           <li><span class="dot"></span>Open source · MIT</li>
         </ul>
       </div>
@@ -270,10 +271,10 @@ tulip-anchor-91-ember
 
     <section id="faq" class="faq wrap" aria-labelledby="faq-title">
       <h2 id="faq-title" class="section-title">Questions</h2>
-      <details><summary>Is it safe to type a secret into a website?</summary><p>This page is static files and a strict Content-Security-Policy (<code>connect-src 'none'</code>): the browser itself blocks it from sending anything anywhere. For the cautious: download the repository, open <code>web/index.html</code> offline, or use the CLI on an air-gapped machine.</p></details>
+      <details><summary>Is it safe to type a secret into a website?</summary><p>This page is static files and a strict Content-Security-Policy (<code>connect-src 'none'</code>): the browser itself blocks it from sending anything anywhere. For the cautious: <a href="heirloom-offline.html" download>download the offline copy</a> — the whole tool in one HTML file — and open it from disk on a machine without network, or use the CLI on an air-gapped computer.</p></details>
       <details><summary>What if a card is lost or destroyed?</summary><p>Nothing happens as long as enough cards remain. With 3-of-5, any two can be lost. If you lose more, make a new set — cards from different sets never mix.</p></details>
       <details><summary>What if a holder forges or alters a card?</summary><p>Every card carries a CRC-32 against accidents. Against deliberate tampering, bring more cards than needed: heirloom cross-checks them and names the card that disagrees.</p></details>
-      <details><summary>Do I need this website to recover?</summary><p>No. The card format is documented in the repository and the math is textbook Shamir; the CLI, a copy of this page, or any reimplementation can recover it.</p></details>
+      <details><summary>Do I need this website to recover?</summary><p>No. The card format is documented in the repository and the math is textbook Shamir; the CLI, the <a href="heirloom-offline.html" download>offline copy</a> of this page, or any reimplementation can recover it.</p></details>
       <details><summary>Should I store the cards' HTML file?</summary><p>No — the file contains every card. Print it, check one card with <em>Recover</em>, then delete the file and clear the print queue.</p></details>
     </section>
   </main>
@@ -281,7 +282,7 @@ tulip-anchor-91-ember
   <footer class="foot">
     <div class="wrap foot-inner">
       <span>heirloom · MIT licensed · made with Gleam</span>
-      <a href="https://github.com/ardazeybek-dev/heirloom" rel="noopener">Source on GitHub</a>
+      <span><a href="heirloom-offline.html" download>Offline copy (one file)</a> · <a href="https://github.com/ardazeybek-dev/heirloom" rel="noopener">Source on GitHub</a></span>
     </div>
   </footer>
 </body>

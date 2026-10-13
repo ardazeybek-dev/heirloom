@@ -37,7 +37,7 @@ It runs entirely in your browser (the page's Content-Security-Policy forbids net
 - **Forgery and damage detection** — every card has a CRC-32; with more cards than needed, heirloom cross-checks them (shares form a Reed–Solomon codeword) and names the card that disagrees.
 - **Length hiding** — the secret's type and length are shared with it and padded to 16-byte blocks.
 - **Recover by camera** — the playground scans card QR codes with your camera or from a photo (BarcodeDetector), or accepts pasted/typed text.
-- **Offline by design** — no dependencies at runtime, no network access, no storage. Download the page or use the CLI on an air-gapped machine.
+- **Offline by design** — no runtime dependencies, no network access, no storage. [`heirloom-offline.html`](https://ardazeybek-dev.github.io/heirloom/heirloom-offline.html) is the whole tool in one file that opens from disk; or use the CLI on an air-gapped machine.
 
 ## Screenshots
 
@@ -55,7 +55,7 @@ It runs entirely in your browser (the page's Content-Security-Policy forbids net
 git clone https://github.com/ardazeybek-dev/heirloom.git
 cd heirloom
 npm install          # esbuild, used to bundle the compiled Gleam
-npm run build        # gleam build + bundle → dist/heirloom.mjs and web/heirloom.js
+npm run build        # gleam build + bundle → dist/heirloom.mjs, web/heirloom.js, web/heirloom-offline.html
 npm link             # optional: puts `heirloom` on your PATH
 ```
 
@@ -124,7 +124,7 @@ The secret itself is never read from the environment — keep it out of `.env` f
 | Typos and smudges (row checks + CRC-32) | A copy left in your printer queue or downloads folder |
 | Forged or altered cards, **if** extra cards are available | A forgery when exactly K cards are presented (nothing to compare against) |
 
-Practical advice: split on a machine you trust (ideally offline), print, verify one card with *Recover*, then delete the HTML file. Cards from different splits never combine, so re-splitting retires the old set. Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
+Practical advice: split on a machine you trust — ideally offline, with the one-file offline copy or the CLI — print, verify one card with *Recover*, then delete the HTML file. Cards from different splits never combine, so re-splitting retires the old set. Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
 ## Project structure
 
@@ -149,7 +149,7 @@ heirloom/
 │   └── heirloom_node_ffi.mjs     Node.js file, stdin and env access
 ├── test/                         gleeunit tests (core, QR known-answer vectors)
 ├── scripts/
-│   ├── bundle.mjs                esbuild: dist/heirloom.mjs + web/heirloom.js
+│   ├── bundle.mjs                esbuild: CLI bundle, browser bundle, one-file offline page
 │   ├── qr-dump.mjs               emits QR matrices for cross-checking
 │   └── verify_qr.py              decodes them with OpenCV
 ├── web/                          static playground (GitHub Pages)
@@ -182,9 +182,8 @@ docker run --rm -i --network none heirloom split -k 2 -n 3 --text < secret.txt
 ## Pitfalls
 
 - **OpenCV fails to decode large QR symbols** → its classic `QRCodeDetector` cannot *locate* v19+ symbols → try `QRCodeDetectorAruco` as well (as `verify_qr.py` does).
+- **The playground is blank when opened from disk** → browsers block ES modules on `file://` → open `heirloom-offline.html` (inline classic script, allowed by a CSP hash) or serve `web/` over HTTP.
 - **Typing a secret on Windows never ends** → stdin needs end-of-file → press `Ctrl+Z` then `Enter` (`Ctrl+D` elsewhere), or use `--secret-file`.
-- **Recovered text lacks a trailing newline** → `split` drops one final newline of typed/piped input → use `--hex` or a file without the newline when exact bytes matter.
-- **Print button does nothing in a sandboxed preview** → `<iframe sandbox>` blocks `print()` → include `allow-modals` (and `allow-same-origin` to call it from the parent).
 
 ## License
 

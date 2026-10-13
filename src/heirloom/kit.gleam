@@ -98,21 +98,49 @@ pub fn recover(texts: List(String)) -> Result(Recovery, RecoverError) {
   let k = first.threshold
   let have = list.length(cards)
   use <- bool_guard(have < k, NotEnough(have, k))
-  let points = list.map(cards, share.to_point)
-  let assert Ok(audit) = shamir.audit(points, threshold: k)
-  case audit.ambiguous, secret.decode(audit.secret) {
-    False, Ok(recovered) ->
-      Ok(Recovery(
-        secret: recovered,
-        fingerprint: share.fingerprint(first),
-        threshold: k,
-        total: first.total,
-        used: audit.consistent,
-        suspicious: audit.suspicious,
-        tolerates: audit.tolerates,
-      ))
-    _, _ -> Error(Inconsistent(audit.suspicious))
+  // A card whose length differs from the majority cannot lie on the same
+  // polynomials: it is damaged or forged (a forger can recompute the CRC).
+  let length = majority_length(cards)
+  let #(odd, same) =
+    list.partition(cards, fn(c) { list.length(c.ys) != length })
+  let odd = list.map(odd, fn(c) { c.index })
+  use <- bool_guard(list.length(same) < k, Inconsistent(odd))
+  case shamir.audit(list.map(same, share.to_point), threshold: k) {
+    Error(_) -> Error(Inconsistent(odd))
+    Ok(audit) -> {
+      let suspicious =
+        list.append(odd, audit.suspicious) |> list.sort(int.compare)
+      case audit.ambiguous, secret.decode(audit.secret) {
+        False, Ok(recovered) ->
+          Ok(Recovery(
+            secret: recovered,
+            fingerprint: share.fingerprint(first),
+            threshold: k,
+            total: first.total,
+            used: audit.consistent,
+            suspicious: suspicious,
+            tolerates: { have - k } / 2,
+          ))
+        _, _ -> Error(Inconsistent(suspicious))
+      }
+    }
   }
+}
+
+/// The most common y-length among the cards; ties go to the earliest card.
+fn majority_length(cards: List(Share)) -> Int {
+  let lengths = list.map(cards, fn(c) { list.length(c.ys) })
+  let #(best, _) =
+    lengths
+    |> list.unique
+    |> list.fold(#(0, 0), fn(best, candidate) {
+      let count = list.count(lengths, fn(l) { l == candidate })
+      case count > best.1 {
+        True -> #(candidate, count)
+        False -> best
+      }
+    })
+  best
 }
 
 fn parse_all(texts: List(String)) -> Result(List(Share), RecoverError) {

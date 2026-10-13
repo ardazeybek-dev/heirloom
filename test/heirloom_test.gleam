@@ -320,3 +320,25 @@ pub fn split_cards_from_text_output_test() {
   assert kit.split_card_text("01  AB  C\n02  DE  F\n\n01  GH  J")
     == ["01  AB  C\n02  DE  F", "01  GH  J"]
 }
+
+pub fn forged_card_of_different_length_does_not_crash_test() {
+  // A forger can shorten a card and recompute its CRC. With exactly K cards
+  // that must be an error; with spare cards it is outvoted and named.
+  let cards = make_cards("length forgery", 2, 4)
+  let forge = fn(card: share.Share) {
+    let assert [_, ..shorter] = card.ys
+    share.to_compact(share.Share(..card, ys: shorter))
+  }
+  let assert [c1, c2, c3, c4] = cards
+  let assert Error(kit.Inconsistent([2])) =
+    kit.recover([share.to_compact(c1), forge(c2)])
+  let assert Ok(recovery) =
+    kit.recover([
+      share.to_compact(c1),
+      forge(c2),
+      share.to_compact(c3),
+      share.to_compact(c4),
+    ])
+  assert recovery.secret == secret.Text("length forgery")
+  assert recovery.suspicious == [2]
+}
