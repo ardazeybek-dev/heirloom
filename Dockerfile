@@ -12,7 +12,7 @@ RUN npm ci --ignore-scripts
 COPY gleam.toml manifest.toml ./
 COPY src ./src
 COPY scripts ./scripts
-RUN gleam build && node scripts/bundle.mjs
+RUN gleam build && node scripts/bundle.mjs --cli-only
 
 # ---- runtime: just Node and the bundle; run it with --network none
 FROM node:22-alpine
