@@ -1,0 +1,28 @@
+# Gleam / Erlang
+*.beam
+*.ez
+/build
+erl_crash.dump
+
+# Node
+node_modules/
+dist/
+web/heirloom.js
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Generated cards — they contain shares of real secrets
+cards*.html
+*.card.txt
+/out
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
