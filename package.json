@@ -1,0 +1,23 @@
+{
+  "name": "@ardazeybek-dev/heirloom",
+  "version": "1.0.0",
+  "description": "Split a secret into printable QR cards — any K of N bring it back (Shamir's Secret Sharing, written in Gleam).",
+  "type": "module",
+  "license": "MIT",
+  "author": "Arda Zeybek",
+  "homepage": "https://ardazeybek-dev.github.io/heirloom/",
+  "repository": { "type": "git", "url": "git+https://github.com/ardazeybek-dev/heirloom.git" },
+  "keywords": ["shamir", "secret-sharing", "qr-code", "backup", "password", "gleam", "digital-legacy"],
+  "bin": { "heirloom": "dist/heirloom.mjs" },
+  "files": ["dist/heirloom.mjs", "README.md", "LICENSE"],
+  "engines": { "node": ">=20.12" },
+  "scripts": {
+    "build": "gleam build && node scripts/bundle.mjs",
+    "test": "gleam test",
+    "verify:qr": "python scripts/verify_qr.py",
+    "dev:web": "npm run build && npx --yes serve web"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10"
+  }
+}

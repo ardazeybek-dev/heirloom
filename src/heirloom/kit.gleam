@@ -4,6 +4,7 @@
 import gleam/int
 import gleam/list
 import gleam/result
+import gleam/string
 import heirloom/secret.{type Secret}
 import heirloom/shamir
 import heirloom/share.{type Share}
@@ -189,4 +190,30 @@ fn join(items: List(String)) -> String {
     [one] -> one
     [first, ..rest] -> first <> ", " <> join(rest)
   }
+}
+
+/// Splits pasted or file text into individual cards: blank lines separate
+/// cards, and every `HL1:` line is a card of its own.
+pub fn split_card_text(text: String) -> List(String) {
+  // Normalise whitespace-only lines to empty ones so they separate cards too.
+  text
+  |> string.replace("\r", "")
+  |> string.split("\n")
+  |> list.map(string.trim)
+  |> string.join("\n")
+  |> string.split("\n\n")
+  |> list.flat_map(fn(block) {
+    let lines = block |> string.split("\n") |> list.map(string.trim)
+    let compact = list.filter(lines, fn(l) { string.contains(string.uppercase(l), share.prefix) })
+    case compact {
+      [] -> [string.join(list.filter(lines, is_card_line), "\n")]
+      _ -> compact
+    }
+  })
+  |> list.filter(fn(card) { string.trim(card) != "" })
+}
+
+/// Drops headings such as "Card 2 of 5 · …" that `--text` output contains.
+fn is_card_line(line: String) -> Bool {
+  line != "" && !string.starts_with(string.lowercase(line), "card ")
 }

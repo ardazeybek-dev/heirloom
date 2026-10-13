@@ -277,3 +277,26 @@ pub fn duplicate_identical_card_is_ignored_test() {
   let assert Ok(recovery) = kit.recover(texts)
   assert recovery.secret == secret.Text("abc")
 }
+
+pub fn forged_card_with_valid_checksum_is_outvoted_test() {
+  // An attacker who holds a card can re-compute its CRC. With 5 cards of a
+  // 2-of-5 split, the other four still outvote the forgery.
+  let cards = make_cards("the real secret", 2, 5)
+  let texts =
+    list.map(cards, fn(card) {
+      case card.index == 4 {
+        True ->
+          share.to_compact(share.Share(..card, ys: list.map(card.ys, gf256.add(_, 1))))
+        False -> share.to_compact(card)
+      }
+    })
+  let assert Ok(recovery) = kit.recover(texts)
+  assert recovery.secret == secret.Text("the real secret")
+  assert recovery.suspicious == [4]
+}
+
+pub fn split_cards_from_text_output_test() {
+  let text = "Card 1 of 3 · any 2\nHL1:AAAA\n  01  AAAA  B\n\nCard 2 of 3\nHL1:BBBB\n"
+  assert kit.split_card_text(text) == ["HL1:AAAA", "HL1:BBBB"]
+  assert kit.split_card_text("01  AB  C\n02  DE  F\n\n01  GH  J") == ["01  AB  C\n02  DE  F", "01  GH  J"]
+}
