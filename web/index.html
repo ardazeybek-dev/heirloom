@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Nothing on this page talks to the network: no analytics, no fonts, no CDNs. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'none'; frame-src 'self'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>heirloom — split a secret into paper cards</title>
+  <meta name="description" content="Split a password, recovery codes or a wallet seed into printable QR cards. Any K of N bring it back; fewer reveal nothing. Runs entirely in your browser.">
+  <meta name="theme-color" content="#14161c">
+  <meta property="og:title" content="heirloom — split a secret into paper cards">
+  <meta property="og:description" content="Any 3 of 5 cards bring your secret back. Fewer reveal nothing. Shamir's Secret Sharing with printable QR cards, entirely offline.">
+  <meta property="og:image" content="https://ardazeybek-dev.github.io/heirloom/social.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#app">Skip to the tool</a>
+
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="logo" href="#top" aria-label="heirloom home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M12 7v10M7.5 9.5 12 12l4.5-2.5"/></svg>
+        heirloom
+      </a>
+      <nav aria-label="Sections">
+        <a href="#how">How it works</a>
+        <a href="#app">Make cards</a>
+        <a href="#cli">CLI</a>
+        <a href="#faq">FAQ</a>
+        <a class="gh" href="https://github.com/ardazeybek-dev/heirloom" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <p class="eyebrow">Shamir's Secret Sharing · on paper</p>
+        <h1>Split a secret into cards.<br><em>Any three</em> bring it back.</h1>
+        <p class="lead">Your password-manager master key, 2FA recovery codes or wallet seed — turned into printable QR cards for the people you trust. Any <b>K</b> of them recover it. Fewer reveal <b>nothing</b>, not even its length.</p>
+        <div class="cta">
+          <a class="btn primary" href="#app" data-tab-link="split">Make cards</a>
+          <a class="btn ghost" href="#app" data-tab-link="recover">Recover a secret</a>
+        </div>
+        <ul class="trust">
+          <li><span class="dot"></span>Runs entirely in your browser</li>
+          <li><span class="dot"></span>Loads nothing from the network</li>
+          <li><span class="dot"></span>Open source · MIT</li>
+        </ul>
+      </div>
+      <figure class="hero-art" aria-label="Five fanned heirloom cards">
+        <div class="fan" id="fan"></div>
+        <figcaption>Five cards, any three recover — <span class="mono" id="fan-set">set ····-···</span></figcaption>
+      </figure>
+    </section>
+
+    <section class="problem wrap" aria-labelledby="problem-title">
+      <h2 id="problem-title" class="section-title">One master password.<br>Where does it go?</h2>
+      <div class="grid3">
+        <article class="tile bad">
+          <p class="tile-tag">A sticky note</p>
+          <h3>One copy, one thief</h3>
+          <p>Whoever finds it gets everything. Lose it in a move or a fire and it is gone for you too.</p>
+        </article>
+        <article class="tile bad">
+          <p class="tile-tag">Tell one person</p>
+          <h3>One person, one point of failure</h3>
+          <p>They might forget, move away, or be the person who needs protecting against.</p>
+        </article>
+        <article class="tile good">
+          <p class="tile-tag">heirloom</p>
+          <h3>No single point, either way</h3>
+          <p>Give five people one card each. Any three can act together; one lost card changes nothing; one curious holder learns nothing.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="app" class="app wrap" aria-labelledby="app-title">
+      <div class="app-head">
+        <h2 id="app-title" class="section-title">The tool</h2>
+        <div class="tabs" role="tablist" aria-label="Mode">
+          <button role="tab" id="tab-split" aria-controls="panel-split" aria-selected="true">Make cards</button>
+          <button role="tab" id="tab-recover" aria-controls="panel-recover" aria-selected="false" tabindex="-1">Recover</button>
+        </div>
+      </div>
+
+      <!-- SPLIT -->
+      <div class="panel" role="tabpanel" id="panel-split" aria-labelledby="tab-split">
+        <form class="split-form" id="split-form" autocomplete="off" novalidate>
+          <div class="field">
+            <div class="field-head">
+              <label for="secret">Secret</label>
+              <div class="seg" role="radiogroup" aria-label="Secret format">
+                <label><input type="radio" name="kind" value="text" checked> Text</label>
+                <label><input type="radio" name="kind" value="hex"> Hex bytes</label>
+              </div>
+            </div>
+            <div class="secret-box">
+              <textarea id="secret" rows="3" spellcheck="false" placeholder="e.g. my vault master password, or a list of recovery codes" class="masked"></textarea>
+              <button type="button" class="icon-btn" id="toggle-mask" aria-pressed="false" aria-label="Show secret">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <p class="hint" id="secret-hint">Never leaves this tab. Up to 512 bytes.</p>
+          </div>
+
+          <div class="kn">
+            <div class="field">
+              <label for="threshold">Cards needed</label>
+              <div class="stepper"><button type="button" data-step="threshold:-1" aria-label="Fewer needed">−</button><input id="threshold" type="number" min="2" max="16" value="3" inputmode="numeric"><button type="button" data-step="threshold:1" aria-label="More needed">+</button></div>
+            </div>
+            <div class="field">
+              <label for="shares">Cards made</label>
+              <div class="stepper"><button type="button" data-step="shares:-1" aria-label="Fewer cards">−</button><input id="shares" type="number" min="2" max="16" value="5" inputmode="numeric"><button type="button" data-step="shares:1" aria-label="More cards">+</button></div>
+            </div>
+            <div class="kn-visual" aria-live="polite">
+              <div class="pips" id="pips"></div>
+              <p id="kn-text">Any <b>3</b> of <b>5</b> recover · <b>2</b> can be lost</p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="label">What is it for? <span class="opt">optional, printed on every card</span></label>
+            <input id="label" type="text" maxlength="80" placeholder="e.g. Family password vault">
+          </div>
+
+          <fieldset class="field">
+            <legend>Who keeps each card? <span class="opt">optional</span></legend>
+            <div class="holders" id="holders"></div>
+          </fieldset>
+
+          <details class="advanced">
+            <summary>Advanced</summary>
+            <div class="adv-grid">
+              <div class="field">
+                <label for="ecl">QR error correction</label>
+                <select id="ecl">
+                  <option value="L">L — 7 %</option>
+                  <option value="M" selected>M — 15 %</option>
+                  <option value="Q">Q — 25 %</option>
+                  <option value="H">H — 30 %</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="paper">Paper</label>
+                <select id="paper"><option value="a4">A4</option><option value="letter">US Letter</option></select>
+              </div>
+              <label class="check"><input type="checkbox" id="pad" checked> Pad to hide the secret's length</label>
+            </div>
+          </details>
+
+          <p class="error" id="split-error" role="alert" hidden></p>
+          <button class="btn primary wide" type="submit">Make cards</button>
+        </form>
+
+        <div class="output" id="split-output" hidden>
+          <div class="summary">
+            <div>
+              <p class="eyebrow">Set <span class="mono" id="out-set"></span></p>
+              <p class="summary-line" id="out-line"></p>
+            </div>
+            <div class="summary-actions">
+              <button class="btn primary" type="button" id="print">Print cards</button>
+              <button class="btn ghost" type="button" id="download">Download .html</button>
+              <button class="btn ghost" type="button" id="copy-text">Copy as text</button>
+            </div>
+          </div>
+          <p class="warn">These cards together hold your secret. Print them, hand them out, then close this tab — nothing was stored.</p>
+          <iframe id="preview" title="Card preview" sandbox="allow-same-origin allow-modals"></iframe>
+        </div>
+      </div>
+
+      <!-- RECOVER -->
+      <div class="panel" role="tabpanel" id="panel-recover" aria-labelledby="tab-recover" hidden>
+        <div class="recover-grid">
+          <div class="field">
+            <div class="field-head">
+              <label for="cards-input">Cards</label>
+              <button type="button" class="link" id="example">Try with example cards</button>
+            </div>
+            <textarea id="cards-input" rows="12" spellcheck="false" placeholder="Paste or type cards here — the HL1:… QR text or the numbered rows. Separate cards with a blank line."></textarea>
+            <div class="scan-row">
+              <button type="button" class="btn ghost" id="scan-camera">Scan with camera</button>
+              <label class="btn ghost file-btn">From a photo<input type="file" id="scan-file" accept="image/*" hidden></label>
+              <span class="hint" id="scan-hint"></span>
+            </div>
+            <video id="camera" playsinline muted hidden></video>
+          </div>
+          <aside class="status" aria-live="polite">
+            <p class="eyebrow">Progress</p>
+            <div class="progress"><div class="bar" id="progress-bar"></div></div>
+            <p class="progress-text" id="progress-text">No cards yet.</p>
+            <ul class="chips" id="chips"></ul>
+            <button class="btn primary wide" type="button" id="recover-btn" disabled>Recover secret</button>
+            <p class="error" id="recover-error" role="alert" hidden></p>
+            <div class="result" id="result" hidden>
+              <p class="eyebrow">Recovered</p>
+              <div class="secret-out">
+                <pre id="secret-out" class="blurred" tabindex="0"></pre>
+                <button type="button" class="reveal" id="reveal">Click to reveal</button>
+              </div>
+              <div class="result-actions">
+                <button class="btn ghost" type="button" id="copy-secret">Copy</button>
+                <button class="btn ghost" type="button" id="clear">Clear everything</button>
+              </div>
+              <p class="hint" id="result-meta"></p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="how wrap" aria-labelledby="how-title">
+      <h2 id="how-title" class="section-title">Why fewer cards reveal nothing</h2>
+      <div class="how-grid">
+        <div class="curve-card">
+          <svg id="curve" viewBox="0 0 560 340" role="img" aria-label="A curve through card points; the secret is where it crosses the vertical axis"></svg>
+          <div class="curve-controls">
+            <span>Cards you hold:</span>
+            <div class="seg small" role="radiogroup" aria-label="Cards held" id="held">
+              <label><input type="radio" name="held" value="1"> 1</label>
+              <label><input type="radio" name="held" value="2"> 2</label>
+              <label><input type="radio" name="held" value="3" checked> 3</label>
+            </div>
+          </div>
+        </div>
+        <ol class="steps">
+          <li><b>The secret becomes a curve.</b> Each byte is the height where a random parabola (for “any 3”) crosses the vertical axis.</li>
+          <li><b>Each card is one point on it.</b> Card #1 holds the curve's height at x = 1, card #2 at x = 2, and so on.</li>
+          <li><b>Three points fix a parabola.</b> With three cards there is exactly one curve — and so exactly one secret.</li>
+          <li><b>Two points fit every parabola.</b> With two cards, every possible secret is equally likely. That is not “hard to crack” — there is nothing to crack.</li>
+        </ol>
+      </div>
+      <p class="fine">For illustration the curve is drawn over real numbers. heirloom does the same over the finite field GF(2<sup>8</sup>), byte by byte, which makes the “every secret equally likely” statement exact.</p>
+    </section>
+
+    <section class="hood wrap" aria-labelledby="hood-title">
+      <h2 id="hood-title" class="section-title">Under the hood</h2>
+      <div class="grid3 hood-grid">
+        <article class="tile"><h3>GF(2<sup>8</sup>) arithmetic</h3><p>Shamir over the AES field: carry-less multiplication, inverses by a<sup>254</sup>, Lagrange interpolation per byte.</p></article>
+        <article class="tile"><h3>A QR encoder from scratch</h3><p>Segments, Reed–Solomon over GF(2<sup>8</sup>)/0x11D, block interleaving, zig-zag placement and all eight masks — cross-checked against OpenCV.</p></article>
+        <article class="tile"><h3>Typo-proof card text</h3><p>Crockford Base32 (no I/L/O/U, case-insensitive) in rows with a mod-37 check symbol, so a typo is reported as “row 3”.</p></article>
+        <article class="tile"><h3>Forgery detection</h3><p>Shares are a Reed–Solomon codeword. With spare cards, a forged or damaged card is outvoted and named.</p></article>
+        <article class="tile"><h3>Length hiding</h3><p>Type and length are shared along with the secret and padded to 16-byte blocks, so a card does not leak how long the secret is.</p></article>
+        <article class="tile"><h3>Written in Gleam</h3><p>A pure, typed core compiled to JavaScript — the same code runs this page and the command-line tool.</p></article>
+      </div>
+    </section>
+
+    <section id="cli" class="cli wrap" aria-labelledby="cli-title">
+      <div>
+        <h2 id="cli-title" class="section-title">Prefer a terminal?</h2>
+        <p class="lead small">The same core ships as a single-file Node.js CLI. Read the secret from stdin, get a printable sheet.</p>
+        <a class="btn ghost" href="https://github.com/ardazeybek-dev/heirloom#command-line" rel="noopener">CLI documentation</a>
+      </div>
+      <pre class="terminal" aria-label="Terminal example"><span class="p">$</span> heirloom split -k 3 -n 5 --label "Family vault" &lt; secret.txt
+<span class="ok">✓</span> <b>5 cards</b> written to <b>cards.html</b> <span class="d">· any 3 recover · set PG4F-A60</span>
+<span class="d">  self-test passed: the cards recombine to your secret.</span>
+
+<span class="p">$</span> heirloom combine card1.txt card3.txt card4.txt
+tulip-anchor-91-ember
+<span class="ok">✓</span> recovered <span class="d">· set PG4F-A60 · cards #1 #3 #4</span>
+
+<span class="p">$</span> heirloom verify card2.txt
+<span class="ok">✓</span> card 1: #2 of 5 <span class="d">· set PG4F-A60 · needs 3</span></pre>
+    </section>
+
+    <section id="faq" class="faq wrap" aria-labelledby="faq-title">
+      <h2 id="faq-title" class="section-title">Questions</h2>
+      <details><summary>Is it safe to type a secret into a website?</summary><p>This page is static files and a strict Content-Security-Policy (<code>connect-src 'none'</code>): the browser itself blocks it from sending anything anywhere. For the cautious: download the repository, open <code>web/index.html</code> offline, or use the CLI on an air-gapped machine.</p></details>
+      <details><summary>What if a card is lost or destroyed?</summary><p>Nothing happens as long as enough cards remain. With 3-of-5, any two can be lost. If you lose more, make a new set — cards from different sets never mix.</p></details>
+      <details><summary>What if a holder forges or alters a card?</summary><p>Every card carries a CRC-32 against accidents. Against deliberate tampering, bring more cards than needed: heirloom cross-checks them and names the card that disagrees.</p></details>
+      <details><summary>Do I need this website to recover?</summary><p>No. The card format is documented in the repository and the math is textbook Shamir; the CLI, a copy of this page, or any reimplementation can recover it.</p></details>
+      <details><summary>Should I store the cards' HTML file?</summary><p>No — the file contains every card. Print it, check one card with <em>Recover</em>, then delete the file and clear the print queue.</p></details>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-inner">
+      <span>heirloom · MIT licensed · made with Gleam</span>
+      <a href="https://github.com/ardazeybek-dev/heirloom" rel="noopener">Source on GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>
